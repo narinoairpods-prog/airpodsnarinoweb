@@ -2,7 +2,7 @@
 
 import styles from "./page.module.css";
 import Link from "next/link";
-import { SyntheticEvent, useEffect, useRef, useState } from "react";
+import { SyntheticEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useProductStore } from "@/store/useProductStore";
 import { ArrowRight } from "lucide-react";
 import { Product } from "@/lib/types";
@@ -12,7 +12,13 @@ export default function Home() {
   const { products } = useProductStore();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
-  
+  const tryPlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = true;
+    video.play().catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (products.length > 0) {
       const activeProducts = products.filter(p => p.status === 'active' && p.stock > 0);
@@ -23,14 +29,15 @@ export default function Home() {
 
   // Force video autoplay on iOS (autoPlay HTML attr is often blocked)
   useEffect(() => {
-    const video = videoRef.current;
-    if (video) {
-      video.muted = true;
-      video.play().catch(() => {
-        // Autoplay blocked by browser policy — ignore silently
-      });
-    }
-  }, []);
+    // Also try on first user interaction (iOS requirement)
+    document.addEventListener('touchstart', tryPlay, { once: true });
+    document.addEventListener('click', tryPlay, { once: true });
+
+    return () => {
+      document.removeEventListener('touchstart', tryPlay);
+      document.removeEventListener('click', tryPlay);
+    };
+  }, [tryPlay]);
 
   const handleTimeUpdate = (e: SyntheticEvent<HTMLVideoElement>) => {
     const video = e.currentTarget;
@@ -46,11 +53,15 @@ export default function Home() {
           ref={videoRef}
           autoPlay 
           muted 
-          playsInline 
+          playsInline
+          webkit-playsinline
           loop
           preload="auto"
+          disablePictureInPicture
           onTimeUpdate={handleTimeUpdate}
+          onCanPlay={tryPlay}
           className={styles.videoBackground}
+          poster="/inicio-poster.jpg"
         >
           <source src="/inicio.mp4" type="video/mp4" />
         </video>

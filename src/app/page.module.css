@@ -30,6 +30,20 @@
   z-index: -3;
 }
 
+/* Hide iOS native play button overlay */
+.videoBackground::-webkit-media-controls {
+  display: none !important;
+}
+.videoBackground::-webkit-media-controls-panel {
+  display: none !important;
+}
+.videoBackground::-webkit-media-controls-play-button {
+  display: none !important;
+}
+.videoBackground::-webkit-media-controls-start-playback-button {
+  display: none !important;
+}
+
 .videoOverlay {
   position: absolute;
   top: 0;
